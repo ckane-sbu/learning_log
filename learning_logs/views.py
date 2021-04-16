@@ -4,6 +4,12 @@ from django.http import Http404
 from .models import Topic, Entry
 from .forms import TopicForm, EntryForm
 
+# Helper functions
+def check_topic_owner(request, topic):
+    """Returns True if request.user == topic.owner,
+       otherwise returns False."""
+    return topic.owner == request.user
+
 # Create your views here.
 def index(request):
     """The home page for Learning Log."""
@@ -21,7 +27,7 @@ def topic(request, topic_id):
     """Show a single topic and all its entries."""
     topic = Topic.objects.get(id = topic_id)
     # Make sure the topic belongs to the current user.
-    if topic.owner != request.user:
+    if not check_topic_owner(request, topic):
         raise Http404
     
     entries = topic.entry_set.order_by('-date_added')
@@ -73,7 +79,7 @@ def edit_entry(request, entry_id):
     """Edit an entry."""
     entry = Entry.objects.get(id = entry_id)
     topic = entry.topic
-    if topic.owner != request.user:
+    if not check_topic_owner(request, topic):
         raise Http404
 
     if request.method != 'POST':
